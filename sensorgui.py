@@ -43,7 +43,7 @@ def read_RMD_EC():
     response = client.read_holding_registers(0x00, 2, unit=1)
     decoder = BinaryPayloadDecoder.fromRegisters(
         response.registers, Endian.Big, wordorder=Endian.Little)
-    readings["EC"] = decoder.decode_32bit_float()
+    readings["EC"] = round(decoder.decode_32bit_float(), 2)
 
     # # Read temperature
     response = client.read_holding_registers(0x04, 2, unit=1)
