@@ -38,18 +38,21 @@ def read_RMD_EC():
     # decoder = BinaryPayloadDecoder.fromRegisters(
     #     [response.registers[0], response.registers[1]], Endian.Little, wordorder=Endian.Little)
     # readings["temp"] = decoder.decode_32bit_float()
+    try:
+        # # Read EC
+        response = client.read_holding_registers(0x00, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            response.registers, Endian.Big, wordorder=Endian.Little)
+        readings["EC"] = round(decoder.decode_32bit_float(), 2)
 
-    # # Read EC
-    response = client.read_holding_registers(0x00, 2, unit=1)
-    decoder = BinaryPayloadDecoder.fromRegisters(
-        response.registers, Endian.Big, wordorder=Endian.Little)
-    readings["EC"] = round(decoder.decode_32bit_float(), 2)
+        # # Read temperature
+        response = client.read_holding_registers(0x04, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            response.registers, Endian.Big, wordorder=Endian.Little)
+        readings["temp"] = round(decoder.decode_32bit_float(), 2)
 
-    # # Read temperature
-    response = client.read_holding_registers(0x04, 2, unit=1)
-    decoder = BinaryPayloadDecoder.fromRegisters(
-        response.registers, Endian.Big, wordorder=Endian.Little)
-    readings["temp"] = round(decoder.decode_32bit_float(), 2)
+    except AttributeError:
+        return ["error decoding"]
     return readings
 
 
@@ -83,7 +86,31 @@ def read_turbidity1():
 
 
 def read_do1():
-    return ["not implemented"]
+    try:
+        response = client.read_holding_registers(0x2000, 6, unit=0x14)
+    except pymodbus.exceptions.ConnectionException:
+        return ["Comms error"]
+    # Read the temperature (in first two registers)
+    try:
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            [response.registers[0], response.registers[1]], Endian.Little, wordorder=Endian.Little)
+        # print(decoder.decode_32bit_float())
+        readings["temperature"] = decoder.decode_32bit_float()
+
+        # Read tubidity (3rd and 4th registers)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            [response.registers[2], response.registers[3]], Endian.Little, wordorder=Endian.Little)
+
+        # # Read tubidity (3rd and 4th registers)
+        # decoder = BinaryPayloadDecoder.fromRegisters(
+        #    [response.registers[4], response.registers[5]], Endian.Little, wordorder=Endian.Little)
+        # print(decoder.decode_32bit_float())
+
+        readings["DO"] = decoder.decode_32bit_float()
+    except AttributeError:
+        return ["error decoding"]
+
+    return readings
 
 
 def read_nitrate1():
