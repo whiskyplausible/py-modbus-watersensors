@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 import pymodbus
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
-from pymodbus.client import ModbusSerialClient as ModbusClient
+from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 import json
 import threading
 import time
