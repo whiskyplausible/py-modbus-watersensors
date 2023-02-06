@@ -85,6 +85,30 @@ def read_turbidity1():
     return readings
 
 
+def read_remond_DO():
+    readings = {}
+    # This works to read from the unit from factory
+    try:
+        response = client.read_holding_registers(0x00, 4, unit=1)
+    except pymodbus.exceptions.ConnectionException:
+        return ["Comms error"]
+
+    # Read the temperature (in first two registers)
+    try:
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            [response.registers[0], response.registers[1]], Endian.Little, wordorder=Endian.Little)
+        readings["DO_remond"] = decoder.decode_32bit_float()
+
+        # Read tubidity (3rd and 4th registers)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            [response.registers[2], response.registers[3]], Endian.Little, wordorder=Endian.Little)
+        readings["temp_remond_DO"] = decoder.decode_32bit_float()
+    except AttributeError:
+        return ["Error decoding"]
+
+    return readings
+
+
 def read_do1():
     try:
         response = client.read_holding_registers(0x2000, 6, unit=0x14)
@@ -100,13 +124,13 @@ def read_do1():
         # Read tubidity (3rd and 4th registers)
         decoder = BinaryPayloadDecoder.fromRegisters(
             [response.registers[2], response.registers[3]], Endian.Little, wordorder=Endian.Little)
+        readings["DO"] = decoder.decode_32bit_float()
 
         # # Read tubidity (3rd and 4th registers)
         # decoder = BinaryPayloadDecoder.fromRegisters(
         #    [response.registers[4], response.registers[5]], Endian.Little, wordorder=Endian.Little)
         # print(decoder.decode_32bit_float())
 
-        readings["DO"] = decoder.decode_32bit_float()
     except AttributeError:
         return ["error decoding"]
 
@@ -147,7 +171,8 @@ def read_sensors():
 
 
 sensors = {"Turbidity sensor 1": read_turbidity1,
-           "DO sensor 1": read_do1,
+           "DO sensor (Desun)": read_do1,
+           "DO sensor (Remond)": read_remond_DO,
            "EC sensor 1": read_RMD_EC,
            "Nitrate sensor 1": read_nitrate1
            }
