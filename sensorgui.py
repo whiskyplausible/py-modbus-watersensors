@@ -13,13 +13,16 @@ import serial.tools.list_ports
 
 q = Queue(maxsize=3)
 client_port = ""
+
 for port, desc, hwid in sorted(serial.tools.list_ports.comports()):
     print(port, desc, hwid)
     if "067B:2303" in hwid: # detect where teensy is plugged in 
         client_port = port
 
+print("port" , port)
 client = ModbusClient(method='rtu', port=client_port,
                       timeout=1, baudrate=9600)
+
 settings = {
     "refresh_rate": 500,
     "current_monitor": None
@@ -103,12 +106,12 @@ def read_remond_DO():
     try:
         decoder = BinaryPayloadDecoder.fromRegisters(
             [response.registers[0], response.registers[1]], Endian.Little, wordorder=Endian.Little)
-        readings["DO_remond"] = decoder.decode_32bit_float()
+        readings["DO_remond"] = round(decoder.decode_32bit_float(),2)
 
         # Read tubidity (3rd and 4th registers)
         decoder = BinaryPayloadDecoder.fromRegisters(
             [response.registers[2], response.registers[3]], Endian.Little, wordorder=Endian.Little)
-        readings["temp_remond_DO"] = decoder.decode_32bit_float()
+        readings["temp_remond_DO"] = round(decoder.decode_32bit_float(),2)
     except AttributeError:
         return ["Error decoding"]
 
@@ -183,8 +186,8 @@ sensors = {"Turbidity sensor 1": read_turbidity1,
            "Nitrate sensor 1": read_nitrate1
            }
 
-title_font = ("Arial", 20)
-reading_font = ("Arial", 15)
+title_font = ("Arial", 10)
+reading_font = ("Arial", 10)
 
 
 layout = [[sg.Text('*'*50)]]
