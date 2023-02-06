@@ -123,7 +123,7 @@ def read_remond_DO():
 
 def read_do1():
     try:
-        response = client.read_holding_registers(0x2000, 6, unit=0x14)
+        response = client.read_holding_registers(0x2000, 6, unit=0x1)
     except pymodbus.exceptions.ConnectionException:
         return ["Comms error"]
     # Read the temperature (in first two registers)
