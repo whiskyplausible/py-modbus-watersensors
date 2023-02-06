@@ -1,3 +1,6 @@
+###### To install one of the RS485 USB use this: https://www.connectix.nl/pl2303hxa-phased-out-since-2012-please-contact-your-supplier-solved/
+###### This requires pymodbus 2.4.0 so pip install pymodbus==2.4.0
+
 
 import PySimpleGUI as sg
 import pymodbus
