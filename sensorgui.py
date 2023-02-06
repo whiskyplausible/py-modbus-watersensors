@@ -3,16 +3,22 @@ import PySimpleGUI as sg
 import pymodbus
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.client import ModbusSerialClient as ModbusClient
 import json
 import threading
 import time
 from queue import Queue
 import datetime
+import serial.tools.list_ports
 
 q = Queue(maxsize=3)
+client_port = ""
+for port, desc, hwid in sorted(serial.tools.list_ports.comports()):
+    print(port, desc, hwid)
+    if "067B:2303" in hwid: # detect where teensy is plugged in 
+        client_port = port
 
-client = ModbusClient(method='rtu', port='/dev/ttyUSB0',
+client = ModbusClient(method='rtu', port=client_port,
                       timeout=1, baudrate=9600)
 settings = {
     "refresh_rate": 500,
