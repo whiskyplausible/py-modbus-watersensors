@@ -38,13 +38,13 @@ def RMD_EC_update_unit_id(new_id):
     client.write_register(0x14, new_id, unit=1)
 
 
-def read_RMD_EC():
+def read_remond_EC():
     readings = {}
     # This works to read from the unit from factory
-    try:
-        response = client.read_holding_registers(0x2600, 5, unit=1)
-    except pymodbus.exceptions.ConnectionException:
-        return ["Comms error"]
+    # try:
+    #     response = client.read_holding_registers(0x2600, 5, unit=1)
+    # except pymodbus.exceptions.ConnectionException:
+    #     return ["Comms error"]
 
     # # Read the temperature (in first two registers)
     # decoder = BinaryPayloadDecoder.fromRegisters(
@@ -121,9 +121,10 @@ def read_remond_DO():
     return readings
 
 
-def read_do1():
+def read_do_desun():
+    readings = {}
     try:
-        response = client.read_holding_registers(0x2000, 6, unit=0x1)
+        response = client.read_holding_registers(0x2000, 6, unit=0x14)
     except pymodbus.exceptions.ConnectionException:
         return ["Comms error"]
     # Read the temperature (in first two registers)
@@ -131,12 +132,12 @@ def read_do1():
         decoder = BinaryPayloadDecoder.fromRegisters(
             [response.registers[0], response.registers[1]], Endian.Little, wordorder=Endian.Little)
         # print(decoder.decode_32bit_float())
-        readings["temperature"] = decoder.decode_32bit_float()
+        readings["temperature"] = round(decoder.decode_32bit_float(),4)
 
         # Read tubidity (3rd and 4th registers)
         decoder = BinaryPayloadDecoder.fromRegisters(
             [response.registers[2], response.registers[3]], Endian.Little, wordorder=Endian.Little)
-        readings["DO"] = decoder.decode_32bit_float()
+        readings["DO"] = round(decoder.decode_32bit_float(),4)
 
         # # Read tubidity (3rd and 4th registers)
         # decoder = BinaryPayloadDecoder.fromRegisters(
@@ -149,8 +150,41 @@ def read_do1():
     return readings
 
 
-def read_nitrate1():
-    return ["not implemented"]
+def read_ammonium_remond():
+    readings = {}
+    
+    try:       
+        response = client.read_holding_registers(0x01, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+        response.registers, Endian.Big, wordorder=Endian.Little)
+        readings["ammonium"] = round(decoder.decode_32bit_float(),4)
+
+        response = client.read_holding_registers(0x03, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+        response.registers, Endian.Big, wordorder=Endian.Little)
+        readings["temp"] = round(decoder.decode_32bit_float(),2)
+
+    except AttributeError:
+        return ["error decoding"]
+    return readings
+
+def read_ammonium_remond():
+    readings = {}
+    
+    try:       
+        response = client.read_holding_registers(0x01, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+        response.registers, Endian.Big, wordorder=Endian.Little)
+        readings["ammonium"] = round(decoder.decode_32bit_float(),4)
+
+        response = client.read_holding_registers(0x03, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+        response.registers, Endian.Big, wordorder=Endian.Little)
+        readings["temp"] = round(decoder.decode_32bit_float(),2)
+
+    except AttributeError:
+        return ["error decoding"]
+    return readings
 
 
 def open_window():
@@ -169,6 +203,12 @@ def open_window():
 lock = threading.Lock()
 readings = {}
 
+sensors = {"Turbidity_sensor_1": read_turbidity1,
+           "DO_sensor_Desun": read_do_desun,
+           "DO_sensor_Remond": read_remond_DO,
+           "EC_sensor_remond": read_remond_EC,
+           "Ammonium_sensor_1": read_ammonium_remond
+           }
 
 def read_sensors():
     global refresh_rate
@@ -178,16 +218,11 @@ def read_sensors():
         reading_dict = {}
         for key in sensors:
             reading_dict[key] = json.dumps(sensors[key]())
+        print(reading_dict)
         q.put(reading_dict)
         print("completed read")
 
 
-sensors = {"Turbidity sensor 1": read_turbidity1,
-           "DO sensor (Desun)": read_do1,
-           "DO sensor (Remond)": read_remond_DO,
-           "EC sensor 1": read_RMD_EC,
-           "Nitrate sensor 1": read_nitrate1
-           }
 
 title_font = ("Arial", 10)
 reading_font = ("Arial", 10)
