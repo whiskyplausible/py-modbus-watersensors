@@ -1,4 +1,7 @@
 import logging
+import serial
+import serial.tools.list_ports
+
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
@@ -10,27 +13,34 @@ logging.basicConfig(format=FORMAT)
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
-client = ModbusClient(method='rtu', port='/dev/ttyUSB0',
+for port, desc, hwid in sorted(serial.tools.list_ports.comports()):
+    print(port, desc, hwid)
+    if "067B:2303" in hwid: # detect where teensy is plugged in 
+        client_port = port
+
+
+
+client = ModbusClient(method='rtu', port=client_port,
                       timeout=1, baudrate=9600)
 
 # # This writes a new unit ID to the sensor. The unit id is the 1 in the [0x010] so unit 2 would be [0x020]
-original_unit = 0x1
+# original_unit = 5120  # 0x1
 
-new_unit = 0x14
-command = hex(new_unit) + "00"
-print()
-print(int(command, 0))
+# new_unit = 0x01
+# command = hex(new_unit) + "00"
+# print()
+# print(int(command, 0))
 
-#client.write_registers(0x3000, [0x0100], unit=0x0E)
-client.write_registers(0x3000, [int(command, 0)], unit=original_unit)
+# #client.write_registers(0x3000, [0x0100], unit=0x0E)
+# client.write_registers(0x3000, [int(command, 0)], unit=original_unit)
 
-# This requests the current unit number of the device
-response = client.read_holding_registers(0x3000, 1, unit=0xFF)
-print(response.registers)
+# # This requests the current unit number of the device
+# response = client.read_holding_registers(0x3000, 1, unit=0xFF)
+# print("address ", response.registers)
 
 
 # This works to read sensors readings from the unit from factory
-response = client.read_holding_registers(0x2000, 6, unit=1)
+response = client.read_holding_registers(0x2000, 6, unit=0x14)
 print(response.registers)
 
 # Read the temperature (in first two registers)
@@ -53,3 +63,10 @@ print(decoder.decode_32bit_float())
 decoder = BinaryPayloadDecoder.fromRegisters(
     [0000, 0x8d41], Endian.Little, wordorder=Endian.Little)
 print("test!", decoder.decode_32bit_float())
+
+# Now trying to split individual readings up to help reading them on the Arduino code
+
+response = client.read_holding_registers(0x2100, 2, unit=0x14)
+decoder = BinaryPayloadDecoder.fromRegisters(
+    [response.registers[0], response.registers[1]], Endian.Little, wordorder=Endian.Little)
+print("***************", decoder.decode_32bit_float())
