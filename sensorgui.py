@@ -17,13 +17,13 @@ import serial.tools.list_ports
 q = Queue(maxsize=3)
 client_port = ""
 
-for port, desc, hwid in sorted(serial.tools.list_ports.comports()):
-    print(port, desc, hwid)
-    if "067B:2303" in hwid: # detect where teensy is plugged in 
-        client_port = port
+# for port, desc, hwid in sorted(serial.tools.list_ports.comports()):
+#     print(port, desc, hwid)
+#     if "067B:2303" in hwid: # detect where teensy is plugged in 
+#         client_port = port
 
-print("port" , port)
-client = ModbusClient(method='rtu', port=client_port,
+# print("port" , port)
+client = ModbusClient(method='rtu', port="COM999",
                       timeout=1, baudrate=9600)
 
 settings = {
