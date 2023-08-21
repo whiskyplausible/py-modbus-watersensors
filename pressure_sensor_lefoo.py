@@ -1,4 +1,11 @@
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+
+# try:
+
+#     from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+# except: 
+#     from pymodbus.client import ModbusSerialClient as ModbusClient
+
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 import time
@@ -13,10 +20,28 @@ log = logging.getLogger()
 
 
 
-
+print("starting")
 # Connect to client
-client = ModbusClient(method='rtu', port='COM26',
+client = ModbusClient(method='rtu', port='COM7',
                       timeout=1, baudrate=9600)
+
+# response = client.write_coil(0,1)
+# response = client.read_coils(0,2)
+# print(response)
+# print("done")
+
+response = client.read_holding_registers(0x005, 1, unit=55)
+print(response.registers[0])
+
+
+#client.write_register(0x005, 55, unit=1)
+client.write_register(0x009, 1, unit=55)
+
+time.sleep(1)
+response = client.read_holding_registers(0x005, 1, unit=55)
+print(response.registers[0])
+
+input()
 
 # Write new ID number to pressure sensor
 client.write_register(0x005, 55, unit=1)
