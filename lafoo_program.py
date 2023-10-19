@@ -16,6 +16,8 @@ def find_port():
 
 client_port = find_port()
 
+print("Connections reminder: black to 12v negative, red to 12v positive, green to RS485 A, white to RS485 B")
+
 if not client_port:
     print("Can't find RS485 USB device - please insert USB and check drivers are working OK")
     print("Press enter to retry connection")
@@ -28,6 +30,7 @@ if not client_port:
 
 client = ModbusClient(method='rtu', port=client_port,
                       timeout=1, baudrate=9600)
+
 
 print("Connected to USB at "+client_port+". Press enter to query status of Lafoo sensor.")
 input()
